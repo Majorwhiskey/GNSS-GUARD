@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Raw logs and generated data stay local
+data/raw/*
+data/features/*
+!data/raw/.gitkeep
+!data/features/.gitkeep
+
+# Large datasets
+datasets/
+
+# Model artifacts (commit only release models deliberately)
+models/*
+!models/.gitkeep
+
+build/
