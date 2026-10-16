@@ -6,7 +6,8 @@ features every second and flags attacks with a small on-device model.
 
 > **Status: data collection phase.** Logging firmware and feature pipeline
 > written and tested on synthetic UBX data. Not yet run against real hardware.
-> No model trained yet.
+> No model trained yet. Toolchain set up and firmware compiles; first
+> hardware session is next, see [docs/DATA_COLLECTION.md](docs/DATA_COLLECTION.md).
 
 ## Why
 
@@ -107,7 +108,8 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/pytest
 
-# Flash the bridge (port may be /dev/ttyACM0)
+# Flash the bridge (port: /dev/ttyUSB0 or /dev/ttyACM0 on Linux,
+# /dev/cu.usbserial-* on macOS, see docs/SETUP.md)
 arduino-cli compile --upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 firmware/ubx_bridge
 
 # Record a session
@@ -123,6 +125,7 @@ supported by the M8L firmware.
 
 ## Documentation
 
+- [Setup](docs/SETUP.md): macOS and Linux toolchain, serial ports, known errors.
 - [Hardware](docs/HARDWARE.md): wiring, receiver configuration, UBX messages, mounting.
 - [Features](docs/FEATURES.md): every feature, its formula, units and rationale.
 - [Data collection](docs/DATA_COLLECTION.md): scenarios, naming, labelling, safety.

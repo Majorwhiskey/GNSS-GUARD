@@ -33,7 +33,8 @@ README.md and keep it updated when a milestone is reached.
 - MCU: classic ESP32 (WROOM-32, no PSRAM, no vector instructions, 520 KB SRAM).
   FQBN `esp32:esp32:esp32`, Arduino core 3.3.x installed via arduino-cli.
 - GNSS: NEO-M8L on UART2, ESP32 RX = GPIO16, TX = GPIO17, 460800 baud, UBX out.
-- USB serial to PC: 921600 baud.
+- USB serial to PC: 921600 baud. Port is `/dev/ttyUSB0` on Linux and
+  `/dev/cu.usbserial-*` on macOS (use `cu.*`, not `tty.*`); see docs/SETUP.md.
 - The bridge configures the receiver in RAM on every boot (no CFG-CFG save),
   trying 9600 / 38400 / 115200 / 460800 to find it.
 - RXM-RAWX support on the M8L is unconfirmed; do not build features that
@@ -51,6 +52,10 @@ rather than from memory.
 
 ## Commands
 
+Dev machine is macOS on Apple Silicon: `arduino-cli` needs Rosetta 2 (bundled
+`ctags` is x86_64). Toolchain steps and known errors are in docs/SETUP.md. In
+the commands below replace `/dev/ttyUSB0` with the real port.
+
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/pytest                                         # feature pipeline tests
@@ -59,6 +64,10 @@ arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 firmware/ubx_bridge
 .venv/bin/python tools/log.py --port /dev/ttyUSB0 --scenario <name> --notes "..."
 .venv/bin/python tools/features.py data/raw/*.ubx
 ```
+
+First real session: follow the checklist in docs/DATA_COLLECTION.md, including
+the RXM-RAWX and fusionMode checks, then record the results under Hardware
+facts above.
 
 ## Conventions
 

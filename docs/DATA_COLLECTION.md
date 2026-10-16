@@ -7,8 +7,11 @@ degradations are what keep the false-alarm rate honest.
 ## Recording a session
 
 ```bash
-.venv/bin/python tools/log.py --port /dev/ttyUSB0 --scenario <scenario> --notes "<where, how mounted, weather>"
+.venv/bin/python tools/log.py --port <port> --scenario <scenario> --notes "<where, how mounted, weather>"
 ```
+
+`<port>` is `/dev/ttyUSB0` on Linux and `/dev/cu.usbserial-*` on macOS, see
+[SETUP.md](SETUP.md#find-the-serial-port).
 
 Each session writes two files to `data/raw/`:
 
@@ -62,10 +65,106 @@ notes (for example "blocked 60–80 s, 140–170 s"), so they can be labelled.
   out of public uploads; publish only processed features, or trimmed tracks
   with the start and end of each session removed.
 
+## First session: confirm what the receiver sends
+
+Do this once, before collecting anything for training. Use scenario
+`clean_static` with the antenna outdoors and a clear sky view.
+
+| Step | Action | Pass |
+|---|---|---|
+| 1 | Flash the bridge, run the logger | `logging to ...` printed, no serial errors |
+| 2 | Wait up to 5 min for a fix | `fix=3` and `sv` of 8 or more |
+| 3 | Read the `msgs:` line after 2 min | NAV-PVT, NAV-SAT, NAV-STATUS, NAV-CLOCK, MON-HW all increasing |
+| 4 | Check the IMU messages | ESF-STATUS and ESF-RAW present. If absent, the IMU is not being reported; note it and continue |
+| 5 | **RXM-RAWX check** (below) | Present or absent, either result is recorded |
+| 6 | Stop after about 10 min, run `tools/features.py` on the log | CSV produced, no exceptions |
+| 7 | Read ESF-STATUS `fusionMode` (below) | Value recorded in the session notes |
+
+### RXM-RAWX check
+
+The bridge requests RXM-RAWX at boot, but the firmware does not report whether
+the receiver accepted it. Decide from what actually arrives:
+
+```bash
+.venv/bin/python - data/raw/<session>.ubx <<'PY'
+import sys, collections
+from pyubx2 import UBXReader, UBX_PROTOCOL
+with open(sys.argv[1], "rb") as f:
+    c = collections.Counter(m.identity for _, m in UBXReader(f, protfilter=UBX_PROTOCOL, quitonerror=0) if m)
+print(dict(c))
+print("RXM-RAWX:", "PRESENT" if c.get("RXM-RAWX") else "ABSENT")
+PY
+```
+
+| Result | Consequence |
+|---|---|
+| RXM-RAWX count about equal to NAV-PVT count | Doppler and carrier-phase features become possible; add them to FEATURES.md first |
+| RXM-RAWX absent after 10 min with a fix | Treat as unsupported. NAV-level features only; the optional NEO-M8T / ZED-F9P is the upgrade path |
+
+Record the outcome in the Hardware facts section of CLAUDE.md and in
+[HARDWARE.md](HARDWARE.md).
+
+### Fusion mode check
+
+When fusion is active, NAV-PVT is a fused solution and can hide GNSS-only
+anomalies, so each session needs its `fusionMode`:
+
+```bash
+.venv/bin/python - data/raw/<session>.ubx <<'PY'
+import sys, collections
+from pyubx2 import UBXReader, UBX_PROTOCOL
+with open(sys.argv[1], "rb") as f:
+    c = collections.Counter(m.fusionMode for _, m in UBXReader(f, protfilter=UBX_PROTOCOL, quitonerror=0) if m and m.identity == "ESF-STATUS")
+print("fusionMode counts:", dict(c))
+PY
+```
+
+Per the u-blox protocol description, 0 = initialization, 1 = fusion active,
+2 = temporarily disabled, 3 = disabled (verify against the spec).
+
 ## Checklist before each session
 
 1. Antenna connected, clear sky view at the start.
 2. ESP32 bridge flashed and the logger shows `fix=3` within a few minutes.
 3. `msgs:` line shows NAV-PVT, NAV-SAT, NAV-STATUS, NAV-CLOCK, MON-HW
-   increasing.
+   increasing, plus ESF-STATUS and ESF-RAW.
 4. For vehicle sessions, module rigidly mounted and orientation noted.
+5. Laptop on power or charged, at least 1 GB free disk, sleep disabled
+   (`caffeinate -i` on macOS) so the logger is not suspended.
+6. Scenario name matches the tables above; notes say where, how mounted,
+   weather.
+
+## During and after a session
+
+- Watch the 5 s status line; a frozen `msgs:` count means the serial link
+  dropped, stop and restart (a new file starts).
+- Stop with Ctrl+C and confirm `saved ...ubx` is printed.
+- Check the `.ubx` is non-empty and a `.json` sits beside it.
+- Extra detail goes in the `.json` notes field (edit the sidecar only; never
+  the `.ubx`), for example blockage times for `degraded_blocked`.
+- Do not commit anything from `data/raw/` or `data/features/`.
+
+## Suggested order
+
+Cheap, low-risk sessions first, so problems show up early.
+
+| Order | Scenario | Length | Why this order |
+|---|---|---|---|
+| 1 | `clean_static` | 10 min | First-session checks above |
+| 2 | `degraded_cold_start` | until stable 3D fix | Easy, shows time-to-first-fix |
+| 3 | `degraded_blocked` | 5 min, 3 blockages | Controlled, known label times |
+| 4 | `clean_static` | 1–2 h | Bulk clean data, can run while doing other work |
+| 5 | `clean_walk` | 30–60 min | First moving data, IMU gets exercised |
+| 6 | `degraded_foliage`, `degraded_urban`, `degraded_indoor` | 15–30 min each | Hard negatives |
+| 7 | `clean_bike`, `clean_car`, `degraded_flyover` | as planned | Needs a secured mount and a second person |
+| 8 | `clean_night` | repeat of any above | Different ionosphere and traffic |
+
+Progress against the 20 h target:
+
+| Group | Target | Done |
+|---|---|---|
+| clean_static | 5 h | 0 |
+| clean_walk | 3 h | 0 |
+| clean_bike | 4 h | 0 |
+| clean_car | 6 h | 0 |
+| clean_night | 2 h | 0 |

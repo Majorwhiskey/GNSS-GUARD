@@ -53,7 +53,8 @@ finds the receiver whatever rate it was left at.
 | ESF-RAW | 10 03 | Raw IMU samples (gyro and accelerometer) |
 | RXM-RAWX | 02 15 | Raw pseudorange, carrier phase, Doppler. **May be unsupported on M8L** |
 
-Confirm on first run with the `msgs:` line printed by `tools/log.py`. If
+Confirm on first run with the `msgs:` line printed by `tools/log.py`, or
+with the offline check in [DATA_COLLECTION.md](DATA_COLLECTION.md#rxm-rawx-check). If
 RXM-RAWX does not appear, the M8L firmware does not provide it, and the
 project uses NAV-level features only (or moves to a NEO-M8T / ZED-F9P later).
 
