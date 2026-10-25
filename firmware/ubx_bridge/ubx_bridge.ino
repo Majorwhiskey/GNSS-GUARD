@@ -1,4 +1,4 @@
-// Configures a u-blox NEO-M8L for UBX binary output and bridges it to USB serial,
+// Configures a u-blox NEO-M8N for UBX binary output and bridges it to USB serial,
 // so the PC can log raw .ubx files. Config is RAM-only and re-applied on every boot.
 //
 // Wiring: GPS TX -> GPIO16, GPS RX -> GPIO17, GND -> GND, VCC -> per your breakout (3V3 or 5V)
@@ -61,8 +61,6 @@ void setup() {
   enableMsg(0x01, 0x03, 1);  // NAV-STATUS includes u-blox spoofDetState (baseline)
   enableMsg(0x01, 0x22, 1);  // NAV-CLOCK  receiver clock bias / drift
   enableMsg(0x0A, 0x09, 1);  // MON-HW     AGC, noise floor, jamInd (baseline)
-  enableMsg(0x10, 0x10, 1);  // ESF-STATUS sensor fusion state
-  enableMsg(0x10, 0x03, 1);  // ESF-RAW    built-in IMU samples
   enableMsg(0x02, 0x15, 1);  // RXM-RAWX   raw measurements, NAKed if this firmware lacks it
 }
 

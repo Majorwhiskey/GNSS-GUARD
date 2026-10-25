@@ -1,7 +1,7 @@
 # GNSS-GUARD
 
-Low-cost GPS jamming and spoofing detector. A u-blox NEO-M8L receiver with a
-built-in IMU feeds an ESP32, which extracts signal-quality and consistency
+Low-cost GPS jamming and spoofing detector. A u-blox NEO-M8N receiver feeds
+an ESP32, which extracts signal-quality and consistency
 features every second and flags attacks with a small on-device model.
 
 > **Status: data collection phase.** Logging firmware and feature pipeline
@@ -19,7 +19,7 @@ Middle East, and ships report positions at inland airports.
 
 Commercial detectors exist for aircraft and timing networks but cost far more
 than the receivers they protect. This project asks how much of that detection
-a ₹10k receiver and a ₹400 microcontroller can do, and measures the answer
+a hobby-grade receiver and a ₹400 microcontroller can do, and measures the answer
 against the receiver's own built-in flags.
 
 ## Threat model
@@ -29,7 +29,7 @@ against the receiver's own built-in flags.
 | Jamming | Broadband noise on L1 | AGC drops, noise floor rises, C/N0 falls on every satellite, fix lost |
 | Meaconing | Records and rebroadcasts the real sky with a delay | Plausible signals, wrong time and position, one antenna geometry |
 | Simplistic spoofing | Transmits a fake constellation from scratch | Sudden C/N0 jump, uniform C/N0 across satellites, loss of lock and re-acquisition |
-| Drag-off spoofing | Aligns with real signals, then slowly pulls position or time away | Small clock-drift anomalies, C/N0 rising together, position drifting while the IMU sees no motion |
+| Drag-off spoofing | Aligns with real signals, then slowly pulls position or time away | Small clock-drift anomalies, C/N0 rising together, slow position drift |
 
 Out of scope: military signals, multi-antenna attackers that reproduce angle of
 arrival, and attacks on the corrections or assistance data.
@@ -38,8 +38,8 @@ arrival, and attacks on the corrections or assistance data.
 
 ```mermaid
 flowchart LR
-    ANT[Active L1 antenna] --> M8L[NEO-M8L<br/>GNSS + IMU]
-    M8L -->|UART 460800<br/>UBX binary| ESP[ESP32]
+    ANT[Active L1 antenna] --> M8N[NEO-M8N<br/>GNSS]
+    M8N -->|UART 460800<br/>UBX binary| ESP[ESP32]
     ESP -->|USB 921600| PC[PC logger<br/>.ubx files]
     PC --> FEAT[Feature pipeline<br/>1 row per second]
     FEAT --> TRAIN[Training<br/>trees / autoencoder]
@@ -60,7 +60,6 @@ feature extraction and inference onto the ESP32 itself.
 | Pseudorange residuals | NAV-SAT | Inconsistent fake signals do not fit one position solution |
 | Clock jump | NAV-CLOCK | Time-push attacks move the clock bias more than its drift explains |
 | Position jump | NAV-PVT | Position change not explained by reported velocity |
-| GNSS heading rate vs gyro | NAV-PVT, ESF-RAW | Position drag-off with no physical rotation or acceleration |
 | AGC, noise floor, jamInd | MON-HW | Jamming raises noise before the fix degrades |
 | u-blox `spoofDetState` | NAV-STATUS | Vendor baseline to beat |
 
@@ -71,13 +70,14 @@ Full definitions in [docs/FEATURES.md](docs/FEATURES.md).
 | Part | Notes | Approx. cost |
 |---|---|---|
 | ESP32 DevKit (classic, WROOM-32) | Any classic ESP32 board | ₹400 |
-| u-blox NEO-M8L breakout | GNSS with built-in 3-axis accelerometer and gyro (ADR/UDR) | owned |
+| u-blox NEO-M8N breakout | Multi-GNSS receiver, no IMU | owned |
 | Active L1 GNSS antenna, SMA or u.FL | Patch antenna with a few metres of cable | ₹800–1500 |
 | Optional: NEO-M8T or ZED-F9P | Raw measurements (RXM-RAWX); F9P adds L2 and stronger built-in detection | ₹4k–25k |
+| Optional: NEO-M8U / NEO-M8L | Built-in IMU, a motion reference an attacker cannot spoof | — |
 
 Wiring:
 
-| NEO-M8L | ESP32 |
+| NEO-M8N | ESP32 |
 |---|---|
 | TX | GPIO16 (UART2 RX) |
 | RX | GPIO17 (UART2 TX) |
@@ -91,7 +91,7 @@ Details, UBX message list and mounting notes in
 
 | Path | Contents |
 |---|---|
-| `firmware/ubx_bridge/` | ESP32 sketch: configures the M8L, bridges UBX to USB |
+| `firmware/ubx_bridge/` | ESP32 sketch: configures the M8N, bridges UBX to USB |
 | `tools/log.py` | Records raw UBX to `data/raw/` with a live status line |
 | `tools/features.py` | Converts `.ubx` logs to per-epoch feature CSVs in `data/features/` |
 | `tests/` | Feature pipeline tests on synthetic UBX data |
@@ -120,8 +120,8 @@ arduino-cli compile --upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 firmware/u
 ```
 
 The logger prints a `msgs:` line every 5 seconds listing which UBX messages the
-receiver is sending. Check it on first run: RXM-RAWX in particular may not be
-supported by the M8L firmware.
+receiver is sending. Check it on first run: RXM-RAWX is not officially supported
+on the M8N, so expect it to be absent.
 
 ## Documentation
 
@@ -134,9 +134,9 @@ supported by the M8L firmware.
 
 ## Roadmap
 
-- [x] UBX bridge firmware for the NEO-M8L
+- [x] UBX bridge firmware for the NEO-M8N
 - [x] Logger and feature pipeline, tested on synthetic data
-- [ ] First real logs; confirm which UBX messages the M8L supports
+- [ ] First real logs; confirm which UBX messages the M8N supports
 - [ ] 20+ hours of clean data across static, walking and vehicle scenarios
 - [ ] Benign degradation set (foliage, urban canyon, antenna blockage)
 - [ ] Synthetic attack injection on clean logs

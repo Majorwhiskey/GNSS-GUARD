@@ -4,8 +4,8 @@ Context for Claude Code working in this repository.
 
 ## Project
 
-GNSS-GUARD: a low-cost GPS jamming and spoofing detector. u-blox NEO-M8L
-(GNSS + built-in IMU) → classic ESP32 → PC logger → feature pipeline →
+GNSS-GUARD: a low-cost GPS jamming and spoofing detector. u-blox NEO-M8N
+(GNSS only, no IMU) → classic ESP32 → PC logger → feature pipeline →
 model → back onto the ESP32. Intended as a portfolio / resume project, so
 measured results, honest baselines and clean documentation matter as much as
 the code.
@@ -32,23 +32,22 @@ README.md and keep it updated when a milestone is reached.
 
 - MCU: classic ESP32 (WROOM-32, no PSRAM, no vector instructions, 520 KB SRAM).
   FQBN `esp32:esp32:esp32`, Arduino core 3.3.x installed via arduino-cli.
-- GNSS: NEO-M8L on UART2, ESP32 RX = GPIO16, TX = GPIO17, 460800 baud, UBX out.
+- GNSS: NEO-M8N on UART2, ESP32 RX = GPIO16, TX = GPIO17, 460800 baud, UBX out.
 - USB serial to PC: 921600 baud. Port is `/dev/ttyUSB0` on Linux and
   `/dev/cu.usbserial-*` on macOS (use `cu.*`, not `tty.*`); see docs/SETUP.md.
 - The bridge configures the receiver in RAM on every boot (no CFG-CFG save),
   trying 9600 / 38400 / 115200 / 460800 to find it.
-- RXM-RAWX support on the M8L is unconfirmed; do not build features that
-  depend on it until a real log shows the message.
-- ESF-RAW scaling: gyro 2^-12 deg/s, accel 2^-10 m/s^2, 24-bit signed field,
-  data type in the top byte (gyro z = 5, y = 13, x = 14; accel x/y/z = 16/17/18).
-- When sensor fusion is active the M8L's NAV-PVT is a fused GNSS+IMU solution,
-  which can mask GNSS-only anomalies. ESF-STATUS `fusionMode` is logged so this
-  can be checked per session.
+- The M8N has no IMU and no ESF messages, so NAV-PVT is a pure GNSS solution
+  and there is no GNSS-independent motion reference. An earlier version of
+  this repo assumed a NEO-M8L; IMU features were removed when that was
+  corrected.
+- RXM-RAWX is not officially supported on the M8N (it is an M8T feature);
+  unconfirmed on this unit. Do not build features that depend on it until a
+  real log shows the message.
 
 Reference: u-blox 8 / M8 Receiver Description including Protocol
-Specification, plus the ADR/UDR protocol description for ESF messages. Check
-message layouts against `pyubx2` (`pyubx2.ubxtypes_get.UBX_PAYLOADS_GET`)
-rather than from memory.
+Specification. Check message layouts against `pyubx2`
+(`pyubx2.ubxtypes_get.UBX_PAYLOADS_GET`) rather than from memory.
 
 ## Commands
 
@@ -66,8 +65,7 @@ arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 firmware/ubx_bridge
 ```
 
 First real session: follow the checklist in docs/DATA_COLLECTION.md, including
-the RXM-RAWX and fusionMode checks, then record the results under Hardware
-facts above.
+the RXM-RAWX check, then record the result under Hardware facts above.
 
 ## Conventions
 

@@ -38,11 +38,11 @@ cannot read it directly. Plan:
 3. Convert to the **portable** feature columns in FEATURES.md with a separate
    script (`tools/texbat_features.py`, to be written).
 
-M8L-only features (AGC, jamInd, IMU) do not exist for TEXBAT. Models evaluated
+u-blox-only features (AGC, jamInd, accuracy estimates) do not exist for TEXBAT. Models evaluated
 on TEXBAT use the portable feature set only.
 
 Expect a domain gap: GNSS-SDR's C/N0 estimator and residuals differ from the
-M8L's. Normalise features per session (for example z-score against the first
+M8N's. Normalise features per session (for example z-score against the first
 minutes of clean data) before cross-dataset evaluation, and report results
 with and without normalisation.
 
@@ -55,8 +55,8 @@ around it.
 
 ## Synthetic injection
 
-Attacks injected in software into clean M8L feature logs. Fast to generate,
-fully labelled, and covers the M8L-only features that public datasets lack.
+Attacks injected in software into clean M8N feature logs. Fast to generate,
+fully labelled, and covers the u-blox-only features that public datasets lack.
 Used for development and tuning, **never** as the only test set: results must
 also be reported on TEXBAT / OAKBAT.
 
@@ -65,7 +65,7 @@ also be reported on TEXBAT / OAKBAT.
 | `jam_ramp` | AGC falls, noise rises, C/N0 drops on all satellites at a set rate, fix degrades and is lost |
 | `spoof_takeover` | All C/N0 jump 5–10 dB together and become uniform; C/N0–elevation correlation collapses; brief loss of lock |
 | `spoof_time_push` | Clock bias ramps at a chosen rate beyond the reported drift |
-| `spoof_pos_push` | Position drifts at 0.5–5 m/s in a fixed direction while IMU features keep their recorded values |
+| `spoof_pos_push` | Position drifts at 0.5–5 m/s in a fixed direction, with reported velocity left unchanged |
 | `meaconing` | Position and time step to a delayed copy of the same log |
 
 Injection parameters (start time, rate, magnitude) are randomised and stored

@@ -1,6 +1,5 @@
 """Feature pipeline tests on synthetic UBX logs. Run with: .venv/bin/pytest"""
 import math
-import struct
 import sys
 from pathlib import Path
 
@@ -12,21 +11,6 @@ import features  # noqa: E402
 
 N_EPOCHS = 10
 T0 = 100_000  # iTOW of first epoch, ms
-
-
-def ubx(cls, msg_id, payload):
-    body = bytes([cls, msg_id]) + struct.pack("<H", len(payload)) + payload
-    a = b = 0
-    for x in body:
-        a = (a + x) & 0xFF
-        b = (b + a) & 0xFF
-    return b"\xb5\x62" + body + bytes([a, b])
-
-
-def esf_raw(samples):
-    """samples: [(dataType, raw 24-bit value)]. Built by hand: pyubx2 drops repeated groups here."""
-    payload = b"\0" * 4 + b"".join(struct.pack("<II", (t << 24) | (v & 0xFFFFFF), 0) for t, v in samples)
-    return ubx(0x10, 0x03, payload)
 
 
 def nav_sat(itow, cnos, elevs):
@@ -41,7 +25,6 @@ def write_log(path, clock_jump_at=None, spoof_from=None):
     out = bytearray()
     for e in range(N_EPOCHS):
         t = T0 + e * 1000
-        out += esf_raw([(5, 2 * 4096), (16, 0), (17, 0), (18, int(9.81 * 1024)), (5, -1 * 4096)])
         out += UBXMessage("NAV", "NAV-PVT", GET, iTOW=t, fixType=3, gnssFixOk=1, numSV=6,
                           lat=12.97 + e * 1e-5, lon=77.59, height=900_000, hAcc=2500, vAcc=4000,
                           sAcc=300, gSpeed=1112, velN=1112, velE=0, headMot=0, pDOP=1.5).serialize()
@@ -63,12 +46,6 @@ def test_one_row_per_epoch(tmp_path):
     df = features.extract(write_log(tmp_path / "clean.ubx"))
     assert len(df) == N_EPOCHS
     assert list(df["iTOW"]) == [T0 + e * 1000 for e in range(N_EPOCHS)]
-
-
-def test_esf_raw_decoding_handles_negative_values(tmp_path):
-    df = features.extract(write_log(tmp_path / "clean.ubx"))
-    assert df["gyro_z_mean"].iloc[0] == pytest.approx(0.5)  # mean of +2 and -1 deg/s
-    assert df["acc_mag_mean"].iloc[0] == pytest.approx(9.81, abs=0.01)
 
 
 def test_clean_sky_has_positive_cno_elevation_correlation(tmp_path):

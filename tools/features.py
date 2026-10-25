@@ -10,26 +10,6 @@ import numpy as np
 import pandas as pd
 from pyubx2 import UBX_PROTOCOL, UBXReader
 
-# ESF-RAW data types (u-blox M8 ADR/UDR protocol spec)
-GYRO_Z, GYRO_Y, GYRO_X = 5, 13, 14
-ACC_X, ACC_Y, ACC_Z = 16, 17, 18
-
-
-def esf_samples(msg):
-    """Yield (dataType, value) from an ESF-RAW message. Gyro in deg/s, accel in m/s^2."""
-    i = 1
-    while hasattr(msg, f"data_{i:02d}"):
-        word = int.from_bytes(getattr(msg, f"data_{i:02d}"), "little")
-        dtype, field = word >> 24, word & 0xFFFFFF
-        if field & 0x800000:
-            field -= 1 << 24
-        if dtype in (GYRO_X, GYRO_Y, GYRO_Z):
-            yield dtype, field / 4096.0
-        elif dtype in (ACC_X, ACC_Y, ACC_Z):
-            yield dtype, field / 1024.0
-        i += 1
-
-
 def sat_features(msg):
     sats = []
     for i in range(1, msg.numSvs + 1):
@@ -59,7 +39,7 @@ def sat_features(msg):
 
 
 def extract(path):
-    rows, cur, imu = {}, None, {k: [] for k in (GYRO_Z, ACC_X, ACC_Y, ACC_Z)}
+    rows, cur = {}, None
     prev_cno = {}
     hw_last = {}
     with open(path, "rb") as fh:
@@ -67,11 +47,6 @@ def extract(path):
             if msg is None:
                 continue
             ident = msg.identity
-            if ident == "ESF-RAW":
-                for t, v in esf_samples(msg):
-                    if t in imu:
-                        imu[t].append(v)
-                continue
             if ident == "MON-HW":  # no timestamp, attach to the current epoch
                 hw_last = dict(noise=msg.noisePerMS, agc=msg.agcCnt, jam_ind=msg.jamInd, jam_state=msg.jammingState)
                 if cur is not None:
@@ -79,17 +54,7 @@ def extract(path):
                 continue
             if not hasattr(msg, "iTOW"):
                 continue
-            if msg.iTOW != cur:  # new epoch: close out IMU stats for the previous one
-                if cur is not None:
-                    r = rows[cur]
-                    if imu[GYRO_Z]:
-                        r["gyro_z_mean"] = float(np.mean(imu[GYRO_Z]))
-                    if imu[ACC_X]:
-                        n = min(len(imu[ACC_X]), len(imu[ACC_Y]), len(imu[ACC_Z]))
-                        mag = np.sqrt(np.array(imu[ACC_X][:n]) ** 2 + np.array(imu[ACC_Y][:n]) ** 2 + np.array(imu[ACC_Z][:n]) ** 2)
-                        r["acc_mag_mean"], r["acc_mag_std"] = float(mag.mean()), float(mag.std())
-                    for v in imu.values():
-                        v.clear()
+            if msg.iTOW != cur:  # new epoch
                 cur = msg.iTOW
                 rows.setdefault(cur, {"iTOW": cur, **hw_last})
             r = rows[cur]

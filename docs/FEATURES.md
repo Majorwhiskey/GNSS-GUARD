@@ -8,8 +8,8 @@ Tiers:
 
 - **Portable**: computable from any receiver's observables, including TEXBAT
   recordings processed through GNSS-SDR. Used for cross-dataset evaluation.
-- **M8L**: depend on u-blox monitor messages or the M8L's IMU. Used for field
-  detection on this hardware.
+- **u-blox**: depend on u-blox-specific messages (accuracy estimates,
+  MON-HW, NAV-STATUS). Used for field detection on this hardware.
 
 ## Position and velocity (NAV-PVT)
 
@@ -20,8 +20,8 @@ Tiers:
 | `num_sv` | count | portable | Satellites used in the solution |
 | `lat`, `lon` | deg | portable | Position |
 | `height` | m | portable | Height above ellipsoid |
-| `h_acc`, `v_acc` | m | M8L | Receiver's own horizontal / vertical accuracy estimate |
-| `s_acc` | m/s | M8L | Speed accuracy estimate |
+| `h_acc`, `v_acc` | m | u-blox | Receiver's own horizontal / vertical accuracy estimate |
+| `s_acc` | m/s | u-blox | Speed accuracy estimate |
 | `speed` | m/s | portable | Ground speed |
 | `vel_n`, `vel_e`, `vel_d` | m/s | portable | NED velocity |
 | `heading` | deg | portable | Heading of motion |
@@ -48,32 +48,17 @@ flagged `svUsed` only.
 
 | Column | Unit | Tier | Definition |
 |---|---|---|---|
-| `ublox_spoof_state` | enum | M8L | 0 unknown/off, 1 no spoofing indicated, 2 spoofing indicated, 3 multiple indications. **Baseline only, never a model input.** |
+| `ublox_spoof_state` | enum | u-blox | 0 unknown/off, 1 no spoofing indicated, 2 spoofing indicated, 3 multiple indications. **Baseline only, never a model input.** |
 | `clk_bias` | ns | portable | Receiver clock bias |
 | `clk_drift` | ns/s | portable | Receiver clock drift |
-| `t_acc`, `f_acc` | ns, ps/s | M8L | Time and frequency accuracy estimates |
-| `noise` | — | M8L | MON-HW `noisePerMS` |
-| `agc` | 0–8191 | M8L | MON-HW `agcCnt` |
-| `jam_ind` | 0–255 | M8L | CW jamming indicator. **Baseline only.** |
-| `jam_state` | enum | M8L | 0 unknown, 1 ok, 2 warning, 3 critical. **Baseline only.** |
+| `t_acc`, `f_acc` | ns, ps/s | u-blox | Time and frequency accuracy estimates |
+| `noise` | — | u-blox | MON-HW `noisePerMS` |
+| `agc` | 0–8191 | u-blox | MON-HW `agcCnt` |
+| `jam_ind` | 0–255 | u-blox | CW jamming indicator. **Baseline only.** |
+| `jam_state` | enum | u-blox | 0 unknown, 1 ok, 2 warning, 3 critical. **Baseline only.** |
 
 MON-HW has no timestamp; it is attached to the epoch current when it arrives,
 and its last value carries forward into new epochs.
-
-## IMU (ESF-RAW)
-
-Samples arriving between two epochs are aggregated into the earlier epoch.
-
-| Column | Unit | Tier | Definition |
-|---|---|---|---|
-| `gyro_z_mean` | deg/s | M8L | Mean gyro z rate |
-| `acc_mag_mean`, `acc_mag_std` | m/s² | M8L | Mean and std of accelerometer magnitude |
-
-Scaling: gyro raw × 2^-12 deg/s, accel raw × 2^-10 m/s², 24-bit signed.
-
-Known limitation: ESF-RAW samples are assigned by arrival order, not by their
-sensor time tag (`sTag`). Good enough at 1 Hz; revisit before using IMU
-features at higher rates.
 
 ## Derived consistency checks
 
@@ -81,13 +66,10 @@ features at higher rates.
 |---|---|---|---|---|
 | `clk_jump` | ns | portable | `Δclk_bias − clk_drift(prev) × Δt` | Time-push attacks move the bias more than the drift predicts |
 | `pos_jump` | m | portable | Distance between consecutive positions minus the displacement predicted by the previous velocity × Δt (flat-earth approximation) | Position pushes and re-acquisition jumps |
-| `heading_rate` | deg/s | portable | Wrapped change in heading / Δt | Compared against `gyro_z_mean` by the model |
+| `heading_rate` | deg/s | portable | Wrapped change in heading / Δt | Abrupt heading changes from position pushes |
 
 ## Planned features
 
-- `heading_rate − gyro_z_mean` residual once the gyro sign convention and
-  mounting orientation are confirmed on real logs.
-- IMU-propagated velocity vs GNSS velocity over 5–10 s windows.
 - Doppler vs velocity consistency, if RXM-RAWX turns out to be available.
 - Window statistics (5 s and 10 s rolling mean, std, slope) of all the above
   for the tree models.

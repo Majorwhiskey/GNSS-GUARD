@@ -6,8 +6,7 @@
    receiver's built-in jamming and spoofing indicators?
 2. Does a model trained only on clean data (anomaly detection) generalise to
    real attacks it has never seen?
-3. How much do the M8L's IMU features add over GNSS-only features?
-4. Does it fit and run on a classic ESP32 at 1 Hz?
+3. Does it fit and run on a classic ESP32 at 1 Hz?
 
 ## Baselines
 
@@ -61,9 +60,8 @@ within 5 s before an attack's labelled start counts as a true detection
 |---|---|---|
 | E1 | B0, B1, B2 vs M1, M2 on test-synth and test-real | Question 1 |
 | E2 | M2 trained clean-only vs M1 supervised, on attack types withheld from M1's training | Question 2 |
-| E3 | M1 / M2 with and without IMU features, on test-synth `spoof_pos_push` | Question 3 |
-| E4 | M2 vs M3 (float vs int8 on device): accuracy loss, latency, memory | Question 4 |
-| E5 | 10+ hours of continuous driving with M3 live | Real-world false alarm rate |
+| E3 | M2 vs M3 (float vs int8 on device): accuracy loss, latency, memory | Question 3 |
+| E4 | 10+ hours of continuous driving with M3 live | Real-world false alarm rate |
 
 ## Reporting
 
