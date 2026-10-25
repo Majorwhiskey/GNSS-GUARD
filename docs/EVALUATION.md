@@ -16,6 +16,18 @@
 | B1 | u-blox `jam_state` ≥ 2 or `jam_ind` above threshold | Vendor jamming flag |
 | B2 | Hand-tuned rules: `cno_elev_corr`, `clk_jump`, `pos_jump`, `cno_delta_mean` thresholds | Classical consistency checks |
 
+All three are in `tools/baselines.py`. `fit` sets each threshold at a chosen
+per-epoch quantile of the clean val sessions (default 0.999, which is about 3.6
+alarm epochs per hour before any alarm merging); `apply` reports alarms, and
+for injected logs time to first alarm and false-alarm epochs. B0 and B1 are
+reported on real attack data only: synthetic injection passes vendor flags
+through unchanged (see DATASETS.md).
+
+```bash
+.venv/bin/python tools/baselines.py fit data/features/<val sessions>.csv --out models/baselines.json
+.venv/bin/python tools/baselines.py apply models/baselines.json data/features/<session>.csv
+```
+
 ## Models
 
 | ID | Model | Training data |

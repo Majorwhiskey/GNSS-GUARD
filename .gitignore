@@ -6,6 +6,7 @@ __pycache__/
 # Raw logs and generated data stay local
 data/raw/*
 data/features/*
+data/synthetic/
 !data/raw/.gitkeep
 !data/features/.gitkeep
 

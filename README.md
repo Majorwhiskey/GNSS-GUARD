@@ -4,10 +4,11 @@ Low-cost GPS jamming and spoofing detector. A u-blox NEO-M8N receiver feeds
 an ESP32, which extracts signal-quality and consistency
 features every second and flags attacks with a small on-device model.
 
-> **Status: data collection phase.** Logging firmware and feature pipeline
-> written and tested on synthetic UBX data. Not yet run against real hardware.
-> No model trained yet. Toolchain set up and firmware compiles; first
-> hardware session is next, see [docs/DATA_COLLECTION.md](docs/DATA_COLLECTION.md).
+> **Status: data collection phase.** Logging, feature pipeline, attack
+> injection and baseline detectors written and tested on synthetic UBX data.
+> Receiver bench-tested over direct USB (configuration accepted, RXM-RAWX not
+> supported); no real logs yet, waiting on an antenna. No model trained yet.
+> See [docs/DATA_COLLECTION.md](docs/DATA_COLLECTION.md).
 
 ## Why
 
@@ -94,10 +95,14 @@ Details, UBX message list and mounting notes in
 | `firmware/ubx_bridge/` | ESP32 sketch: configures the M8N, bridges UBX to USB |
 | `tools/log.py` | Records raw UBX to `data/raw/` with a live status line |
 | `tools/features.py` | Converts `.ubx` logs to per-epoch feature CSVs in `data/features/` |
-| `tests/` | Feature pipeline tests on synthetic UBX data |
+| `tools/configure.py` | Applies the receiver configuration over the receiver's own USB port |
+| `tools/inject.py` | Injects labelled synthetic attacks into clean `.ubx` logs, writes `data/synthetic/` |
+| `tools/baselines.py` | Baseline detectors B0–B2: fit thresholds on clean data, apply to feature CSVs |
+| `tests/` | Feature, injection and baseline tests on synthetic UBX data |
 | `docs/` | Hardware, features, data collection, datasets, evaluation |
 | `data/raw/` | Raw `.ubx` logs and `.json` sidecars (not committed) |
 | `data/features/` | Generated feature CSVs (not committed, regenerable) |
+| `data/synthetic/` | Injected attack logs and their label `.json` (not committed, regenerable) |
 | `models/` | Trained models and exported headers |
 
 ## Quick start
@@ -142,9 +147,9 @@ own USB into the PC and log with `--port /dev/cu.usbmodem* --configure`; see
 - [ ] First real logs; confirm which UBX messages the M8N supports
 - [ ] 20+ hours of clean data across static, walking and vehicle scenarios
 - [ ] Benign degradation set (foliage, urban canyon, antenna blockage)
-- [ ] Synthetic attack injection on clean logs
+- [ ] Synthetic attack injection on clean logs (code and tests done, waiting for clean logs)
 - [ ] TEXBAT processed through GNSS-SDR into the portable feature set
-- [ ] Baselines: u-blox flags, threshold rules
+- [ ] Baselines: u-blox flags, threshold rules (code and tests done, no results yet)
 - [ ] Models: gradient-boosted trees, autoencoder trained on clean data only
 - [ ] int8 model and feature extraction running on the ESP32
 - [ ] Field evaluation: false alarms per hour over long drives

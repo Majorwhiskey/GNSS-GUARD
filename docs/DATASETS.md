@@ -55,18 +55,37 @@ around it.
 
 ## Synthetic injection
 
-Attacks injected in software into clean M8N feature logs. Fast to generate,
-fully labelled, and covers the u-blox-only features that public datasets lack.
-Used for development and tuning, **never** as the only test set: results must
-also be reported on TEXBAT / OAKBAT.
+Attacks injected in software into clean M8N logs. Fast to generate, fully
+labelled, and covers the u-blox-only features that public datasets lack. Used
+for development and tuning, **never** as the only test set: results must also
+be reported on TEXBAT / OAKBAT.
 
-| Type | Injection |
-|---|---|
-| `jam_ramp` | AGC falls, noise rises, C/N0 drops on all satellites at a set rate, fix degrades and is lost |
-| `spoof_takeover` | All C/N0 jump 5–10 dB together and become uniform; C/N0–elevation correlation collapses; brief loss of lock |
-| `spoof_time_push` | Clock bias ramps at a chosen rate beyond the reported drift |
-| `spoof_pos_push` | Position drifts at 0.5–5 m/s in a fixed direction, with reported velocity left unchanged |
-| `meaconing` | Position and time step to a delayed copy of the same log |
+```bash
+.venv/bin/python tools/inject.py data/raw/<session>.ubx --attack all --seeds 1-5
+.venv/bin/python tools/features.py data/synthetic/*.ubx
+```
 
-Injection parameters (start time, rate, magnitude) are randomised and stored
-alongside each synthetic file so every result can be reproduced.
+`tools/inject.py` edits the UBX messages themselves (NAV-SAT, NAV-PVT,
+NAV-CLOCK, NAV-STATUS, MON-HW) and writes a new log to `data/synthetic/`, so
+`features.py` computes every feature from the injected messages with the same
+code as for real logs. The raw log is never modified. Each output has a
+`.json` with the attack, seed, parameters and window (`start_itow` to
+`end_itow`, ms, end exclusive); `inject.labels()` turns it into per-epoch
+labels.
+
+| Type | Injection | Parameters (uniform draw) |
+|---|---|---|
+| `jam_ramp` | C/N0 on every satellite falls linearly; satellites below 25 dB-Hz leave the fix, below 12 dB-Hz lose lock; fix lost under 4 used; MON-HW noise rises up to 4× and AGC falls to half | `rate_db_s` 0.2–1.0 |
+| `spoof_takeover` | Optional loss of lock, then every tracked satellite sits at the old mean + delta with a fixed per-satellite offset, unrelated to elevation, capped at 55 dB-Hz | `delta_db` 5–10, `spread_db` 0.5–1.5, `loss_s` 0–3 |
+| `spoof_time_push` | `clkB` ramps; `clkD` untouched, so the drift does not explain it | `rate_ns_s` 2–50 |
+| `spoof_pos_push` | Position moves along a bearing; reported velocity untouched | `speed_m_s` 0.5–5, `bearing_deg` 0–360 |
+| `meaconing` | Optional loss of lock, then a constant clock step (rebroadcast delay), position step (rebroadcast antenna location) and common C/N0 offset | `delay_us` 1–100, `offset_m` 50–2000, `bearing_deg`, `cno_offset_db` −3 to 6, `loss_s` 0–3 |
+
+Every window starts 30–60% into the log and lasts 60–300 s (or to the end of
+the log). The tracking thresholds and the MON-HW response are assumptions, not
+measurements; recalibrate them once `degraded_*` sessions show how this
+receiver actually behaves as signals weaken.
+
+Vendor flags (`spoofDetState`, `jamInd`, `jammingState`) are passed through as
+recorded, because u-blox's detector cannot be simulated. Baselines B0 and B1
+are therefore only evaluated on real attack data, never on synthetic.
