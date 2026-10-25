@@ -95,14 +95,17 @@ Details, UBX message list and mounting notes in
 | Path | Contents |
 |---|---|
 | `firmware/ubx_bridge/` | ESP32 sketch: configures the M8N, bridges UBX to USB |
+| `firmware/lib/gnss_features/` | C++ feature library for the ESP32, same formulas as `tools/features.py` |
+| `firmware/feature_replay/` | Bench sketch: replays UBX from the PC through the library, prints features |
 | `tools/log.py` | Records raw UBX to `data/raw/` with a live status line |
 | `tools/features.py` | Converts `.ubx` logs to per-epoch feature CSVs in `data/features/` |
 | `tools/configure.py` | Applies the receiver configuration over the receiver's own USB port |
 | `tools/inject.py` | Injects labelled synthetic attacks into clean `.ubx` logs, writes `data/synthetic/` |
 | `tools/baselines.py` | Baseline detectors B0–B2: fit thresholds on clean data, apply to feature CSVs |
 | `tools/evaluate.py` | Event-level metrics: detections, time to detect, false alarms per hour |
+| `tools/device_parity.py` | Checks the ESP32's feature output against `tools/features.py` |
 | `tools/split.py` | Assigns sessions to train / val / test splits in `data/splits.json` (committed, append-only) |
-| `tests/` | Feature, injection, baseline and evaluation tests on synthetic UBX data |
+| `tests/` | Feature, injection, baseline, evaluation and firmware parity tests on synthetic UBX data |
 | `docs/` | Hardware, features, data collection, datasets, evaluation |
 | `data/raw/` | Raw `.ubx` logs and `.json` sidecars (not committed) |
 | `data/features/` | Generated feature CSVs (not committed, regenerable) |
@@ -155,7 +158,7 @@ own USB into the PC and log with `--port /dev/cu.usbmodem* --configure`; see
 - [ ] TEXBAT processed through GNSS-SDR into the portable feature set
 - [ ] Baselines: u-blox flags, threshold rules (code and tests done, no results yet)
 - [ ] Models: gradient-boosted trees, autoencoder trained on clean data only
-- [ ] int8 model and feature extraction running on the ESP32
+- [ ] int8 model and feature extraction running on the ESP32 (feature extraction done and parity-checked on the board; model pending)
 - [ ] Field evaluation: false alarms per hour over long drives
 - [ ] Write-up
 

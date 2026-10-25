@@ -32,3 +32,4 @@ jobs:
           arduino-cli core update-index
           arduino-cli core install esp32:esp32@3.3.12
       - run: arduino-cli compile --fqbn esp32:esp32:esp32 firmware/ubx_bridge
+      - run: arduino-cli compile --fqbn esp32:esp32:esp32 --library firmware/lib/gnss_features firmware/feature_replay

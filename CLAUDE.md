@@ -24,7 +24,9 @@ README.md and keep it updated when a milestone is reached.
 - Never commit `data/raw/` or `data/features/` contents (see .gitignore).
 - A feature computed in Python and on the ESP32 must use the same formula and
   units. When changing a feature, update `tools/features.py`,
-  `docs/FEATURES.md` and (once it exists) the firmware implementation together.
+  `docs/FEATURES.md` and `firmware/lib/gnss_features/` together; parity is
+  enforced by `tests/test_firmware_parity.py` (native build, runs in CI) and
+  checked on the board with `tools/device_parity.py`.
 - Do not report a metric in README or docs unless it came from a real run;
   note the dataset and command that produced it.
 
@@ -70,6 +72,8 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/pytest                                         # feature pipeline tests
 arduino-cli compile --fqbn esp32:esp32:esp32 firmware/ubx_bridge
 arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 firmware/ubx_bridge
+arduino-cli compile --fqbn esp32:esp32:esp32 --library firmware/lib/gnss_features firmware/feature_replay
+.venv/bin/python tools/device_parity.py --port /dev/ttyUSB0 <logs.ubx>  # feature_replay flashed
 .venv/bin/python tools/log.py --port /dev/ttyUSB0 --scenario <name> --notes "..."
 .venv/bin/python tools/log.py --port /dev/cu.usbmodem1101 --configure --scenario <name> --notes "..."  # receiver on direct USB
 .venv/bin/python tools/features.py data/raw/*.ubx

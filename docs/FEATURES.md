@@ -1,8 +1,21 @@
 # Features
 
 One row per navigation epoch (1 Hz), keyed by GPS time of week `iTOW` (ms).
-Produced by `tools/features.py`. The ESP32 implementation (phase 3) must match
-these definitions exactly.
+Produced by `tools/features.py` (reference) and by the C++ library in
+`firmware/lib/gnss_features/` for the ESP32. The two must match:
+
+| Check | What it runs | Where |
+|---|---|---|
+| `tests/test_firmware_parity.py` | Library built natively, compared column by column with `features.py` on clean, injected, gappy, corrupted and turning logs | Every `pytest` run and CI |
+| `tools/device_parity.py` | Logs streamed to the ESP32 running `firmware/feature_replay`, output compared the same way | On the bench, after library changes |
+
+Tolerance is 1e-9 relative, 1e-6 absolute: pyubx2 rounds scaled fields to 12
+decimals and the library does not. Streaming differences (epochs emitted when
+the next one starts; epochs opened by NAV-class messages) are documented in
+`gnss_features.h`. First on-device check (`tools/device_parity.py`,
+2026-10-25): 7 synthetic logs (clean, all five attacks, heading wrap) matched
+on an ESP32-WROOM-32. `feature_replay` uses 27.6 KB of static RAM against
+22.1 KB for `ubx_bridge`, so the library's state is roughly 5.5 KB.
 
 Tiers:
 
