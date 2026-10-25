@@ -101,6 +101,7 @@ Details, UBX message list and mounting notes in
 | `tools/inject.py` | Injects labelled synthetic attacks into clean `.ubx` logs, writes `data/synthetic/` |
 | `tools/baselines.py` | Baseline detectors B0–B2: fit thresholds on clean data, apply to feature CSVs |
 | `tools/evaluate.py` | Event-level metrics: detections, time to detect, false alarms per hour |
+| `tools/split.py` | Assigns sessions to train / val / test splits in `data/splits.json` (committed, append-only) |
 | `tests/` | Feature, injection, baseline and evaluation tests on synthetic UBX data |
 | `docs/` | Hardware, features, data collection, datasets, evaluation |
 | `data/raw/` | Raw `.ubx` logs and `.json` sidecars (not committed) |
@@ -141,7 +142,7 @@ own USB into the PC and log with `--port /dev/cu.usbmodem* --configure`; see
 - [Features](docs/FEATURES.md): every feature, its formula, units and rationale.
 - [Data collection](docs/DATA_COLLECTION.md): scenarios, naming, labelling, safety.
 - [Datasets](docs/DATASETS.md): TEXBAT, OAKBAT and synthetic attack injection.
-- [Evaluation](docs/EVALUATION.md): baselines, metrics and planned experiments.
+- [Evaluation](docs/EVALUATION.md): baselines, metrics, splits and planned experiments.
 
 ## Roadmap
 

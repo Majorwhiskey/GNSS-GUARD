@@ -1,6 +1,6 @@
 """Log raw UBX from the ESP32 bridge to data/raw/<time>_<scenario>.ubx with a live summary.
 
-Usage: python tools/log.py --port /dev/ttyUSB0 --scenario clean_drive --notes "city loop, dashboard mount"
+Usage: python tools/log.py --port /dev/ttyUSB0 --scenario clean_car --notes "city loop, antenna on roof"
 
 With the receiver plugged straight into USB (no bridge), add --configure so the
 bridge's receiver configuration is applied first; see tools/configure.py.
@@ -20,10 +20,13 @@ from configure import configure
 p = argparse.ArgumentParser()
 p.add_argument("--port", default="/dev/ttyUSB0")
 p.add_argument("--baud", type=int, default=921600)
-p.add_argument("--scenario", required=True, help="e.g. clean_static, clean_drive, foil_cover, urban_canyon")
+p.add_argument("--scenario", required=True, help="clean_* or degraded_*, see docs/DATA_COLLECTION.md")
 p.add_argument("--notes", default="")
 p.add_argument("--configure", action="store_true", help="receiver on direct USB: apply the bridge's config first")
 args = p.parse_args()
+# Checked before recording: split.py rejects other names, and raw logs are never renamed or edited.
+if not args.scenario.startswith(("clean_", "degraded_")):
+    p.error("--scenario must start with clean_ or degraded_ (see docs/DATA_COLLECTION.md)")
 
 ser = serial.Serial(args.port, args.baud, timeout=1)
 meta = {"scenario": args.scenario, "notes": args.notes, "link": "esp32-bridge"}

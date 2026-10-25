@@ -124,6 +124,8 @@ Record the outcome in the Hardware facts section of CLAUDE.md and in
 - Check the `.ubx` is non-empty and a `.json` sits beside it.
 - Extra detail goes in the `.json` notes field (edit the sidecar only; never
   the `.ubx`), for example blockage times for `degraded_blocked`.
+- Run `tools/features.py` on the new log, then `tools/split.py
+  data/features/*.csv` to assign it to a split; commit `data/splits.json`.
 - Do not commit anything from `data/raw/` or `data/features/`.
 
 ## Suggested order

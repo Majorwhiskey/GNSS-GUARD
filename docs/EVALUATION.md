@@ -51,6 +51,20 @@ row-level splits leak.
 
 Thresholds are fixed on val and never tuned on any test split.
 
+`tools/split.py` keeps the assignment in `data/splits.json`, which is
+committed. Run it on the feature CSVs after each collection day:
+
+```bash
+.venv/bin/python tools/split.py data/features/*.csv
+```
+
+A session never changes split once assigned; new `clean_*` sessions go to
+whichever split is furthest below its target hours for that scenario (the
+first three sessions of a scenario go to train, val and test-clean in turn).
+Injected logs are skipped. Inject synthetic attacks only from sessions of the
+split they will be used in: train sessions for M1's training attacks,
+test-clean sessions for test-synth.
+
 ## Metrics
 
 | Metric | Meaning |
