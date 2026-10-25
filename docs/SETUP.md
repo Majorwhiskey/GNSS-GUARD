@@ -9,7 +9,7 @@ Verified on macOS (Apple Silicon) with Python 3.12 and Arduino core esp32
 |---|---|---|
 | 1. Homebrew | see https://brew.sh | Needed for `arduino-cli` |
 | 2. Python env | `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt` | Python 3.12 |
-| 3. Tests | `.venv/bin/pytest` | 6 tests should pass |
+| 3. Tests | `.venv/bin/pytest` | All tests should pass; CI runs the same on every push |
 | 4. arduino-cli | `brew install arduino-cli` | |
 | 5. ESP32 core | `arduino-cli core update-index && arduino-cli core install esp32:esp32` | Downloads about 1.5 GB, several minutes with no progress output |
 | 6. Rosetta 2 (Apple Silicon only) | `softwareupdate --install-rosetta --agree-to-license` | The core's bundled `ctags` is an x86_64 binary |

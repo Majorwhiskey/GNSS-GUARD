@@ -1,5 +1,7 @@
 # GNSS-GUARD
 
+[![CI](https://github.com/Majorwhiskey/GNSS-GUARD/actions/workflows/ci.yml/badge.svg)](https://github.com/Majorwhiskey/GNSS-GUARD/actions/workflows/ci.yml)
+
 Low-cost GPS jamming and spoofing detector. A u-blox NEO-M8N receiver feeds
 an ESP32, which extracts signal-quality and consistency
 features every second and flags attacks with a small on-device model.
