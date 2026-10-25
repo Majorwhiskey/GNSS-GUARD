@@ -98,7 +98,8 @@ Details, UBX message list and mounting notes in
 | `tools/configure.py` | Applies the receiver configuration over the receiver's own USB port |
 | `tools/inject.py` | Injects labelled synthetic attacks into clean `.ubx` logs, writes `data/synthetic/` |
 | `tools/baselines.py` | Baseline detectors B0–B2: fit thresholds on clean data, apply to feature CSVs |
-| `tests/` | Feature, injection and baseline tests on synthetic UBX data |
+| `tools/evaluate.py` | Event-level metrics: detections, time to detect, false alarms per hour |
+| `tests/` | Feature, injection, baseline and evaluation tests on synthetic UBX data |
 | `docs/` | Hardware, features, data collection, datasets, evaluation |
 | `data/raw/` | Raw `.ubx` logs and `.json` sidecars (not committed) |
 | `data/features/` | Generated feature CSVs (not committed, regenerable) |

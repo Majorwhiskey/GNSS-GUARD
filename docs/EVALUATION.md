@@ -66,6 +66,24 @@ An alarm is counted once per contiguous run of positive epochs. An alarm
 within 5 s before an attack's labelled start counts as a true detection
 (label timing in imported datasets is approximate).
 
+`tools/evaluate.py` implements these rules. Per detector and attack type it
+reports sessions, detected, missed, and median / 90th percentile time to
+detect; per detector it reports false alarms per hour, with sessions whose
+name contains `degraded_` reported separately. An alarm event overlapping the
+attack window or the 5 s before it is a detection; every other event is a
+false alarm, and false-alarm hours exclude that window.
+
+```bash
+.venv/bin/python tools/evaluate.py models/baselines.json \
+    --clean data/features/<test-clean and degraded sessions>.csv \
+    --attacked data/features/<session>__<attack>_s<seed>.csv
+```
+
+Injected CSVs start with their source session's name, so a glob such as
+`clean_static_*.csv` also matches them; `evaluate.py` rejects any `--clean`
+file that has attack labels. Detection rate at a fixed false-alarm rate and
+ROC / PR AUC need a continuous score and are added with the models.
+
 ## Experiments
 
 | ID | Comparison | Answers |
