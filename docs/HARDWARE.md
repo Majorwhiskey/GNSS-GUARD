@@ -21,7 +21,7 @@ position against. See the upgrade path for modules that add one.
 | TX (TXD1) | GPIO16 | UART2 RX on the ESP32 |
 | RX (RXD1) | GPIO17 | UART2 TX on the ESP32 |
 | GND | GND | Shared with the GPS power supply |
-| VCC | Separate 3.3 V supply | **Not** the ESP32's 3V3 pin, see below |
+| VCC | 3V3 | With a 100+ µF capacitor across GPS VCC/GND, and a solid USB supply, see below |
 
 Pin labels are not consistent between breakouts. The board used here labels
 its UART pins from the host's side, so its "TX" pin goes to GPIO17 and its
@@ -29,18 +29,27 @@ its UART pins from the host's side, so its "TX" pin goes to GPIO17 and its
 
 ### Power
 
-Fed from the ESP32 DevKit's 3V3 pin, the M8N board first browned out the
-ESP32, and with a 100+ µF capacitor added it instead rebooted itself every
-1–2 s (`$GNTXT` boot banner repeating, never tracking). A multimeter showed a
-steady 3.2 V because the dips are too short to register. On its own USB port
-the same board ran with no reboots. Power it from a separate 3.3 V supply
-(for example an MB102 breadboard module on a barrel-jack supply) with grounds
-tied together, or log from its USB port directly as below.
+The GPS can run from the ESP32 DevKit's 3V3 pin, but it needs a solid supply
+behind the ESP32. On the first bench session the ESP32 was on a bus-powered
+USB-C hub:
+
+| Setup | Result |
+|---|---|
+| GPS on ESP32 3V3, no capacitor | ESP32 brownout resets |
+| + 100+ µF capacitor across GPS VCC/GND | ESP32 stable, GPS rebooting every ~1.75 s (`$GNTXT` banner repeating, LED blinking) |
+| Same, ESP32 on a power bank | LED steady |
+| Same, hub's USB-C PD input connected to the charger | Stable: no reboots in 30 s, UBX through the bridge |
+
+A multimeter on 3V3 read a steady 3.2 V throughout, because the dips are too
+short to register. If the banner repeats or the LED blinks before a fix, suspect
+the USB supply first. A separate 3.3 V supply (for example an MB102 breadboard
+module) with grounds tied together also works.
 
 ### Direct USB logging (no bridge)
 
-The receiver's own USB port is a complete alternative to the bridge for data
-collection: same UBX messages, same files.
+The receiver's own USB port is an alternative to the bridge for data
+collection, useful when the ESP32's supply is the problem: same UBX messages,
+same files.
 
 ```bash
 .venv/bin/python tools/log.py --port /dev/cu.usbmodem1101 --configure --scenario clean_static --notes "..."

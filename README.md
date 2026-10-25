@@ -6,7 +6,7 @@ features every second and flags attacks with a small on-device model.
 
 > **Status: data collection phase.** Logging, feature pipeline, attack
 > injection and baseline detectors written and tested on synthetic UBX data.
-> Receiver bench-tested over direct USB (configuration accepted, RXM-RAWX not
+> Receiver bench-tested through the ESP32 bridge and over direct USB (RXM-RAWX not
 > supported); no real logs yet, waiting on an antenna. No model trained yet.
 > See [docs/DATA_COLLECTION.md](docs/DATA_COLLECTION.md).
 
@@ -83,7 +83,7 @@ Wiring:
 | TX | GPIO16 (UART2 RX) |
 | RX | GPIO17 (UART2 TX) |
 | GND | GND |
-| VCC | Separate 3.3 V supply, not the ESP32 3V3 pin (see docs/HARDWARE.md) |
+| VCC | 3V3, with a 100+ µF capacitor and a solid USB supply (see docs/HARDWARE.md) |
 
 Details, UBX message list and mounting notes in
 [docs/HARDWARE.md](docs/HARDWARE.md).
@@ -127,7 +127,7 @@ arduino-cli compile --upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 firmware/u
 The logger prints a `msgs:` line every 5 seconds listing which UBX messages the
 receiver is sending. RXM-RAWX is not available: this M8N's firmware NAKs it.
 
-No ESP32 at hand, or no separate 3.3 V supply for the GPS? Plug the receiver's
+No ESP32 at hand, or GPS rebooting on the ESP32's supply? Plug the receiver's
 own USB into the PC and log with `--port /dev/cu.usbmodem* --configure`; see
 [docs/HARDWARE.md](docs/HARDWARE.md#direct-usb-logging-no-bridge).
 

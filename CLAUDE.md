@@ -44,14 +44,16 @@ README.md and keep it updated when a milestone is reached.
 - Receiver firmware: EXT CORE 2.01 (75350), PROTVER 15.00, GNSS GPS + GLONASS.
   RXM-RAWX is **unsupported**: CFG-MSG for it is NAKed (2026-10-25). Do not
   build features that depend on it.
-- Power: the GPS board reboots every ~1–2 s when fed from the ESP32's 3V3 pin
-  (even with a bulk capacitor), and is stable on its own USB. It must not be
-  powered from the ESP32 3V3.
+- Power: GPS VCC on the ESP32's 3V3 pin works, with a 100+ µF capacitor across
+  GPS VCC/GND, **provided the ESP32's USB supply is solid**. Through the Mac's
+  bus-powered USB-C hub the GPS rebooted every ~1.75 s; with the hub's PD input
+  connected to the charger (or the ESP32 on a power bank) it is stable.
+  Symptom of a weak supply: `$GNTXT` boot banner repeating, LED blinking.
 - This breakout's UART pins are labelled from the host's side: the pin marked
   TX goes to GPIO17 and the pin marked RX to GPIO16.
-- Current logging link: receiver straight into the PC over its own USB
-  (`/dev/cu.usbmodem*`), configured by `tools/configure.py` / `log.py
-  --configure`. The ESP32 bridge path needs a separate 3.3 V supply first.
+- Logging links, both verified on the bench (2026-10-25): the ESP32 bridge
+  (`/dev/cu.usbserial-0001`, hub on PD power), or the receiver straight into
+  the PC over its own USB (`/dev/cu.usbmodem*`) with `log.py --configure`.
 
 Reference: u-blox 8 / M8 Receiver Description including Protocol
 Specification. Check message layouts against `pyubx2`
