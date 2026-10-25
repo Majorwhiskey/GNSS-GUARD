@@ -1,6 +1,9 @@
 """Log raw UBX from the ESP32 bridge to data/raw/<time>_<scenario>.ubx with a live summary.
 
 Usage: python tools/log.py --port /dev/ttyUSB0 --scenario clean_drive --notes "city loop, dashboard mount"
+
+With the receiver plugged straight into USB (no bridge), add --configure so the
+bridge's receiver configuration is applied first; see tools/configure.py.
 """
 import argparse
 import collections
@@ -12,19 +15,29 @@ import time
 import serial
 from pyubx2 import UBX_PROTOCOL, UBXReader
 
+from configure import configure
+
 p = argparse.ArgumentParser()
 p.add_argument("--port", default="/dev/ttyUSB0")
 p.add_argument("--baud", type=int, default=921600)
 p.add_argument("--scenario", required=True, help="e.g. clean_static, clean_drive, foil_cover, urban_canyon")
 p.add_argument("--notes", default="")
+p.add_argument("--configure", action="store_true", help="receiver on direct USB: apply the bridge's config first")
 args = p.parse_args()
+
+ser = serial.Serial(args.port, args.baud, timeout=1)
+meta = {"scenario": args.scenario, "notes": args.notes, "link": "esp32-bridge"}
+if args.configure:
+    meta["link"] = "direct-usb"
+    meta["config_acks"] = configure(ser)
+    print("config:", meta["config_acks"])
 
 os.makedirs("data/raw", exist_ok=True)
 stem = os.path.join("data/raw", time.strftime("%Y%m%d_%H%M%S") + "_" + args.scenario)
+meta["start"] = time.time()
 with open(stem + ".json", "w") as f:
-    json.dump({"scenario": args.scenario, "notes": args.notes, "start": time.time()}, f, indent=2)
+    json.dump(meta, f, indent=2)
 
-ser = serial.Serial(args.port, args.baud, timeout=1)
 reader = UBXReader(ser, protfilter=UBX_PROTOCOL, quitonerror=0)
 counts = collections.Counter()
 last = {}

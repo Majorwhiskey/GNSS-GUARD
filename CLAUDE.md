@@ -41,9 +41,17 @@ README.md and keep it updated when a milestone is reached.
   and there is no GNSS-independent motion reference. An earlier version of
   this repo assumed a NEO-M8L; IMU features were removed when that was
   corrected.
-- RXM-RAWX is not officially supported on the M8N (it is an M8T feature);
-  unconfirmed on this unit. Do not build features that depend on it until a
-  real log shows the message.
+- Receiver firmware: EXT CORE 2.01 (75350), PROTVER 15.00, GNSS GPS + GLONASS.
+  RXM-RAWX is **unsupported**: CFG-MSG for it is NAKed (2026-10-25). Do not
+  build features that depend on it.
+- Power: the GPS board reboots every ~1–2 s when fed from the ESP32's 3V3 pin
+  (even with a bulk capacitor), and is stable on its own USB. It must not be
+  powered from the ESP32 3V3.
+- This breakout's UART pins are labelled from the host's side: the pin marked
+  TX goes to GPIO17 and the pin marked RX to GPIO16.
+- Current logging link: receiver straight into the PC over its own USB
+  (`/dev/cu.usbmodem*`), configured by `tools/configure.py` / `log.py
+  --configure`. The ESP32 bridge path needs a separate 3.3 V supply first.
 
 Reference: u-blox 8 / M8 Receiver Description including Protocol
 Specification. Check message layouts against `pyubx2`
@@ -61,6 +69,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 arduino-cli compile --fqbn esp32:esp32:esp32 firmware/ubx_bridge
 arduino-cli upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 firmware/ubx_bridge
 .venv/bin/python tools/log.py --port /dev/ttyUSB0 --scenario <name> --notes "..."
+.venv/bin/python tools/log.py --port /dev/cu.usbmodem1101 --configure --scenario <name> --notes "..."  # receiver on direct USB
 .venv/bin/python tools/features.py data/raw/*.ubx
 ```
 

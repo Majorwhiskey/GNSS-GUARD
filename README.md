@@ -82,7 +82,7 @@ Wiring:
 | TX | GPIO16 (UART2 RX) |
 | RX | GPIO17 (UART2 TX) |
 | GND | GND |
-| VCC | 3V3 or 5V, check your breakout |
+| VCC | Separate 3.3 V supply, not the ESP32 3V3 pin (see docs/HARDWARE.md) |
 
 Details, UBX message list and mounting notes in
 [docs/HARDWARE.md](docs/HARDWARE.md).
@@ -120,8 +120,11 @@ arduino-cli compile --upload -p /dev/ttyUSB0 --fqbn esp32:esp32:esp32 firmware/u
 ```
 
 The logger prints a `msgs:` line every 5 seconds listing which UBX messages the
-receiver is sending. Check it on first run: RXM-RAWX is not officially supported
-on the M8N, so expect it to be absent.
+receiver is sending. RXM-RAWX is not available: this M8N's firmware NAKs it.
+
+No ESP32 at hand, or no separate 3.3 V supply for the GPS? Plug the receiver's
+own USB into the PC and log with `--port /dev/cu.usbmodem* --configure`; see
+[docs/HARDWARE.md](docs/HARDWARE.md#direct-usb-logging-no-bridge).
 
 ## Documentation
 

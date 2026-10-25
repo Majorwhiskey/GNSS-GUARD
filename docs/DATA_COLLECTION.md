@@ -11,7 +11,9 @@ degradations are what keep the false-alarm rate honest.
 ```
 
 `<port>` is `/dev/ttyUSB0` on Linux and `/dev/cu.usbserial-*` on macOS, see
-[SETUP.md](SETUP.md#find-the-serial-port).
+[SETUP.md](SETUP.md#find-the-serial-port). With the receiver plugged straight
+into USB instead of the bridge, use its `/dev/cu.usbmodem*` port and add
+`--configure`; see [HARDWARE.md](HARDWARE.md#direct-usb-logging-no-bridge).
 
 Each session writes two files to `data/raw/`:
 

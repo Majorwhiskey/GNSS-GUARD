@@ -70,6 +70,7 @@ and its last value carries forward into new epochs.
 
 ## Planned features
 
-- Doppler vs velocity consistency, if RXM-RAWX turns out to be available.
+- Doppler vs velocity consistency needs RXM-RAWX, which this receiver NAKs;
+  only with an upgraded receiver.
 - Window statistics (5 s and 10 s rolling mean, std, slope) of all the above
   for the tree models.
